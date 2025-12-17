@@ -1,89 +1,189 @@
-StockTrade App - Developer Documentation
+📈 StockTrade App
 
-1. Overview
+A web-based stock market simulator built with Vanilla PHP, MySQL, and JavaScript.
+StockTrade allows users to simulate trading with real-time market data, manage portfolios, and request funds through an admin-controlled system.
 
-StockTrade is a web-based stock market simulator built with PHP (Vanilla), MySQL, and JavaScript. It features real-time data fetching (Alpha Vantage), portfolio tracking, and an admin system for managing user funds.
+🚀 Overview
 
-2. Authentication & Roles
+StockTrade is designed as a lightweight trading simulator featuring:
 
-Standard Users
+Real-time and simulated stock data
 
-Registration: Requires Username, Email, and Password.
+Secure authentication with 2FA
 
-2FA (Two-Factor Auth): A 6-digit PIN is sent to the registered email via PHP's mail() function. The user cannot log in without verifying this PIN.
+Portfolio and balance management
 
-Starting Balance: $100.00.
+Admin dashboard for approving user fund requests
 
-Admin Account
+Market data is powered by Alpha Vantage, with smart handling of API rate limits.
 
-Username: admin (The system specifically checks for this username).
+🔐 Authentication & Roles
+👤 Standard Users
 
-Special Privileges:
+Registration Requirements
 
-2FA Bypass: The admin account does NOT require email verification or OTP codes. Login is instant.
+Username
 
-Admin Panel: Access to a special dashboard (admin.php) to manage user fund requests.
+Email
 
-How to Create: Simply register a new account with the username admin. The system will automatically assign the Admin role and verify it.
+Password
 
-3. Core Features
+Two-Factor Authentication (2FA)
 
-Market Data Engine (api.php)
+A 6-digit OTP is sent to the registered email
 
-To handle API rate limits (Alpha Vantage Free Tier = 5 calls/min), the app uses a Hybrid Strategy:
+Implemented using PHP’s mail() function
 
-Real Data: The first 5 stocks (e.g., AAPL, MSFT) fetch real live prices via cURL.
+Login is blocked until the OTP is verified
 
-Simulated Data: The remaining 15 stocks use a realistic "Random Walk" simulation based on real market base prices.
+Starting Balance
 
-Caching: All data is cached in the user $_SESSION for 60 seconds to ensure the app remains fast and responsive.
+$100.00
 
-Balance Request System
+🛡️ Admin Account
 
-User Side: Users request funds via the Account page.
+Username
 
-Database: Request is stored in balance_requests table with status 'pending'.
+admin (hardcoded role check)
 
-Admin Side: Admin sees the request in Admin Panel. Clicking "Approve" runs a transaction that credits the user's users.cash column and marks the request as 'approved'.
+Special Privileges
 
-Favorites System
+2FA Bypass
+Admin login does not require email verification or OTP.
 
-Users can "Star" up to 5 stocks.
+Admin Panel Access
+Dedicated dashboard (admin.php) for managing balance requests.
 
-These are stored in the favorites table.
+How to Create an Admin Account
 
-The Market page automatically sorts favorited stocks to the top of the list.
+Register normally using the username admin
 
-4. Configuration
+The system automatically assigns admin privileges and verifies the account
 
-Database Connection
+⚙️ Core Features
+📊 Market Data Engine (api.php)
 
-Located in conn.php.
+To work around Alpha Vantage free-tier limits (5 calls/minute), the app uses a hybrid data strategy:
 
-Class: connector (Custom MySQLi wrapper).
+Real Data
 
-Error Handling: Configured to fail silently (JSON error) for the API, but shows plain text errors if the file is accessed directly in the browser for debugging.
+First 5 stocks (e.g., AAPL, MSFT)
 
-API Settings
+Fetched live via cURL
 
-Located in api.php.
+Simulated Data
 
-API Key: Update ALPHA_VANTAGE_KEY constant with a real key.
+Remaining 15 stocks
 
-Email Settings: Update the $headers in sendEmailOTP() to change the "From" address (currently no-reply@devbartos.cz).
+Generated using a realistic random walk algorithm based on real base prices
 
-5. File Structure
+Caching
 
-index.php: Entry point router (redirects to Auth or Market).
+Market data is cached in $_SESSION
 
-api.php: The backend logic. Handles ALL data requests (Login, Trade, Chart Data).
+Cache duration: 60 seconds
 
-header.php: Contains global assets:
+Ensures fast performance and reduced API usage
 
-CSS/JS libraries (Tailwind, Chart.js).
+💰 Balance Request System
+User Side
 
-Global Modals: Alert, Confirm, and Loading Screen.
+Users submit balance requests from the Account page
 
-Startup Loader: Logic to show the black loading screen only once per session.
+Database
 
-nav.php: Responsive navigation bar (Desktop + Mobile Hamburger menu).
+Requests are stored in the balance_requests table
+
+Default status: pending
+
+Admin Side
+
+Admin views requests in the Admin Panel
+
+Clicking Approve:
+
+Credits the user’s users.cash balance
+
+Updates request status to approved
+
+Executed as a secure database transaction
+
+⭐ Favorites System
+
+Users can favorite (star) up to 5 stocks
+
+Favorites are stored in the favorites table
+
+Favorited stocks are automatically:
+
+Sorted to the top of the Market page
+
+🔧 Configuration
+🗄️ Database Connection
+
+File: conn.php
+
+Class: connector
+
+Custom MySQLi wrapper
+
+Error Handling
+
+API requests fail silently with JSON errors
+
+Direct browser access shows plaintext errors for debugging
+
+🌐 API & Email Settings
+
+File: api.php
+
+Alpha Vantage
+define('ALPHA_VANTAGE_KEY', 'YOUR_API_KEY_HERE');
+
+Email (2FA OTP)
+
+Modify the $headers variable in sendEmailOTP()
+
+Default sender:
+
+no-reply@devbartos.cz
+
+📁 File Structure
+/
+├── index.php        # Entry point router (Auth → Market)
+├── api.php          # Backend logic (Auth, Trades, Charts, API)
+├── conn.php         # Database connector
+├── header.php       # Global assets and UI components
+│   ├── Tailwind CSS
+│   ├── Chart.js
+│   ├── Global Modals (Alert, Confirm, Loader)
+│   └── One-time session loading screen logic
+├── nav.php          # Responsive navigation (Desktop + Mobile)
+└── admin.php        # Admin dashboard
+
+🧪 Tech Stack
+
+Backend: PHP (Vanilla)
+
+Frontend: JavaScript, Tailwind CSS
+
+Database: MySQL
+
+Charts: Chart.js
+
+Market Data: Alpha Vantage API
+
+📄 License
+
+This project is for educational and development purposes.
+Feel free to fork, modify, and experiment.
+
+If you want, I can also:
+
+Add installation instructions
+
+Write a .env example
+
+Create API endpoint documentation
+
+Make it more open-source–ready (badges, license, screenshots)
