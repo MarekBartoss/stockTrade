@@ -1,189 +1,111 @@
-📈 StockTrade App
+<div align="center">
 
-A web-based stock market simulator built with Vanilla PHP, MySQL, and JavaScript.
-StockTrade allows users to simulate trading with real-time market data, manage portfolios, and request funds through an admin-controlled system.
+# 📈 StockTrade
 
-🚀 Overview
+### Real-Time Market Simulation Platform
 
-StockTrade is designed as a lightweight trading simulator featuring:
+<p>
+<b>StockTrade</b> is a robust, web-based stock market simulation platform.
+It features real-time market data integration, a comprehensive portfolio management system,
+and secure administrative controls for managing user funds.
+</p>
 
-Real-time and simulated stock data
+</div>
 
-Secure authentication with 2FA
+---
 
-Portfolio and balance management
+## ✨ Key Features
 
-Admin dashboard for approving user fund requests
+### 🚀 Core Functionality
+* **Real-Time Data Engine:** Utilizes a hybrid strategy combining Alpha Vantage API for live data (top stocks) and a sophisticated "Random Walk" algorithm for simulated market movement to handle rate limits.
+* **Responsive Design:** Built with Tailwind CSS, ensuring a seamless experience across desktop and mobile devices.
+* **Smart Caching:** Session-based caching mechanism to optimize API usage and page load speeds.
 
-Market data is powered by Alpha Vantage, with smart handling of API rate limits.
+### 🔐 Authentication & Security
+* **Secure Registration:** Password hashing and unique email validation.
+* **Two-Factor Authentication (2FA):** OTP (One-Time Password) verification system via email (`mail()`) for standard users.
+* **Role-Based Access Control:** Distinct capabilities for User and Admin accounts.
 
-🔐 Authentication & Roles
-👤 Standard Users
+### 💼 Portfolio Management
+* **Trade Execution:** Buy and sell stocks with instant balance updates.
+* **Analytics:** Real-time tracking of Average Cost, Total Gains/Losses, and Percentage Returns.
+* **Favorites:** "Star" up to 5 priority stocks to keep them at the top of your market feed.
 
-Registration Requirements
+### 🛠 Administrative Control
+* **Balance Request System:** Users can request funds via their dashboard.
+* **Admin Panel:** Admins can review, approve, or reject balance requests securely.
+* **Admin Bypass:** Special simplified login flow for the admin account (No 2FA required).
 
-Username
+---
 
-Email
+## ⚙️ Configuration & Setup
 
-Password
+### 1. Database Setup
+Import the provided SQL schema into your MySQL/MariaDB database. Then, configure the connection:
 
-Two-Factor Authentication (2FA)
+**File:** `conn.php`
+**Action:** Update the connector class instantiation with your server credentials.
+```php
+$db = new connector("localhost", "db_user", "db_password", "db_name");
+```
 
-A 6-digit OTP is sent to the registered email
+### 2. API Configuration
+Get your free API key from Alpha Vantage.
 
-Implemented using PHP’s mail() function
+**File:** `api.php`
+**Action:** Replace the demo key constant.
+```php
+define('ALPHA_VANTAGE_KEY', 'YOUR_REAL_KEY');
+```
 
-Login is blocked until the OTP is verified
+### 3. Email Headers
+Ensure your hosting provider allows the "From" address specified in the mail headers.
 
-Starting Balance
+**File:** `api.php`
+**Action:** Update the `$headers` in the `sendEmailOTP` function.
+```php
+$headers = "From: no-reply@your-domain.com\r\n";
+```
 
-$100.00
+---
 
-🛡️ Admin Account
+## 👥 User Roles
 
-Username
+| Role | Username | Features | Login Flow |
+| :--- | :--- | :--- | :--- |
+| **Standard User** | (Any) | Trading, Portfolio, Favorites, Request Funds | Username + Password + Email 2FA |
+| **Admin** | `admin` | Approve Requests, View All, Bypass Restrictions | Username + Password (Instant Login) |
 
-admin (hardcoded role check)
+> [!NOTE]
+> New users start with a default balance of **$100.00**.
 
-Special Privileges
+---
 
-2FA Bypass
-Admin login does not require email verification or OTP.
+## 📂 File Structure
 
-Admin Panel Access
-Dedicated dashboard (admin.php) for managing balance requests.
+```text
+├── 📄 index.php        # Entry point router (Auth Guard)
+├── 📄 api.php          # Backend Controller (Login, Trades, Data)
+├── 📄 auth.php         # Login/Register UI with 2FA Modal
+├── 📄 market.php       # Main Dashboard & Real-time Grid
+├── 📄 detail.php       # Stock Charts & Trading Interface
+├── 📄 portfolio.php    # User Holdings & Performance
+├── 📄 account.php      # User Stats, History & Fund Requests
+├── 📄 admin.php        # Admin Panel for Fund Management
+├── 📄 header.php       # Global Assets, Modals & Loaders
+├── 📄 nav.php          # Responsive Navigation Bar
+└── 📄 conn.php         # Database Connection Class
+```
 
-How to Create an Admin Account
+## ⚠️ Requirements
 
-Register normally using the username admin
-
-The system automatically assigns admin privileges and verifies the account
-
-⚙️ Core Features
-📊 Market Data Engine (api.php)
-
-To work around Alpha Vantage free-tier limits (5 calls/minute), the app uses a hybrid data strategy:
-
-Real Data
-
-First 5 stocks (e.g., AAPL, MSFT)
-
-Fetched live via cURL
-
-Simulated Data
-
-Remaining 15 stocks
-
-Generated using a realistic random walk algorithm based on real base prices
-
-Caching
-
-Market data is cached in $_SESSION
-
-Cache duration: 60 seconds
-
-Ensures fast performance and reduced API usage
-
-💰 Balance Request System
-User Side
-
-Users submit balance requests from the Account page
-
-Database
-
-Requests are stored in the balance_requests table
-
-Default status: pending
-
-Admin Side
-
-Admin views requests in the Admin Panel
-
-Clicking Approve:
-
-Credits the user’s users.cash balance
-
-Updates request status to approved
-
-Executed as a secure database transaction
-
-⭐ Favorites System
-
-Users can favorite (star) up to 5 stocks
-
-Favorites are stored in the favorites table
-
-Favorited stocks are automatically:
-
-Sorted to the top of the Market page
-
-🔧 Configuration
-🗄️ Database Connection
-
-File: conn.php
-
-Class: connector
-
-Custom MySQLi wrapper
-
-Error Handling
-
-API requests fail silently with JSON errors
-
-Direct browser access shows plaintext errors for debugging
-
-🌐 API & Email Settings
-
-File: api.php
-
-Alpha Vantage
-define('ALPHA_VANTAGE_KEY', 'YOUR_API_KEY_HERE');
-
-Email (2FA OTP)
-
-Modify the $headers variable in sendEmailOTP()
-
-Default sender:
-
-no-reply@devbartos.cz
-
-📁 File Structure
-/
-├── index.php        # Entry point router (Auth → Market)
-├── api.php          # Backend logic (Auth, Trades, Charts, API)
-├── conn.php         # Database connector
-├── header.php       # Global assets and UI components
-│   ├── Tailwind CSS
-│   ├── Chart.js
-│   ├── Global Modals (Alert, Confirm, Loader)
-│   └── One-time session loading screen logic
-├── nav.php          # Responsive navigation (Desktop + Mobile)
-└── admin.php        # Admin dashboard
-
-🧪 Tech Stack
-
-Backend: PHP (Vanilla)
-
-Frontend: JavaScript, Tailwind CSS
-
-Database: MySQL
-
-Charts: Chart.js
-
-Market Data: Alpha Vantage API
-
-📄 License
-
-This project is for educational and development purposes.
-Feel free to fork, modify, and experiment.
-
-If you want, I can also:
-
-Add installation instructions
-
-Write a .env example
-
-Create API endpoint documentation
-
-Make it more open-source–ready (badges, license, screenshots)
+* PHP 7.4 or higher
+* MySQL / MariaDB
+* Apache/Nginx Web Server
+* cURL extension enabled (for API calls)
+* sendmail configured (for 2FA)
+
+<div align="center">
+<br>
+<sub>Built for a school project. Not for real financial trading.</sub>
+</div>
