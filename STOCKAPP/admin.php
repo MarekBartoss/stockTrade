@@ -6,13 +6,14 @@
     <a href="market.php" class="text-sm font-bold underline">Exit</a>
 </nav>
 
-<main class="flex-1 overflow-y-auto p-8 relative">
+<main class="flex-1 overflow-y-auto p-4 md:p-8 relative">
     <div class="max-w-4xl mx-auto fade-in">
-        <h2 class="text-4xl font-bold mb-8">Balance Requests</h2>
+        <h2 class="text-3xl md:text-4xl font-bold mb-6 md:mb-8">Balance Requests</h2>
         
+        <!-- Responsive Container -->
         <div class="bg-white rounded-3xl border border-gray-100 overflow-hidden shadow-sm">
-            <table class="w-full text-left">
-                <thead class="bg-gray-50 text-xs font-bold uppercase text-gray-400">
+            <table class="w-full text-left block md:table">
+                <thead class="bg-gray-50 text-xs font-bold uppercase text-gray-400 hidden md:table-header-group">
                     <tr>
                         <th class="p-6">User</th>
                         <th class="p-6 text-right">Amount</th>
@@ -20,7 +21,7 @@
                         <th class="p-6 text-right">Action</th>
                     </tr>
                 </thead>
-                <tbody id="reqBody" class="divide-y divide-gray-100"></tbody>
+                <tbody id="reqBody" class="block md:table-row-group divide-y divide-gray-100"></tbody>
             </table>
         </div>
         <div id="emptyMsg" class="hidden text-center py-20 text-gray-400">No pending requests.</div>
@@ -43,13 +44,25 @@
 
         reqs.forEach(r => {
             const tr = document.createElement('tr');
+            // Responsive Classes: Block on Mobile, Table on Desktop
+            tr.className = "block md:table-row p-6 md:p-0 border-b border-gray-100 last:border-0 hover:bg-gray-50 transition";
+            
             tr.innerHTML = `
-                <td class="p-6 font-bold">${r.username}</td>
-                <td class="p-6 text-right font-mono text-lg">$${parseFloat(r.amount).toLocaleString()}</td>
-                <td class="p-6 text-right text-gray-400 text-sm">${r.created_at}</td>
-                <td class="p-6 text-right flex justify-end gap-2">
-                    <button onclick="handle(${r.id}, 'approved')" class="bg-green-100 text-green-700 px-4 py-2 rounded-lg font-bold hover:bg-green-200">Approve</button>
-                    <button onclick="handle(${r.id}, 'rejected')" class="bg-red-100 text-red-700 px-4 py-2 rounded-lg font-bold hover:bg-red-200">Reject</button>
+                <td class="flex justify-between items-center md:table-cell md:p-6 font-bold text-lg md:text-base pb-2 md:pb-6">
+                    <span class="md:hidden text-xs font-bold text-gray-400 uppercase">User</span>
+                    ${r.username}
+                </td>
+                <td class="flex justify-between items-center md:table-cell md:text-right md:p-6 font-mono text-lg py-2 md:py-6">
+                    <span class="md:hidden text-xs font-bold text-gray-400 uppercase">Amount</span>
+                    $${parseFloat(r.amount).toLocaleString()}
+                </td>
+                <td class="flex justify-between items-center md:table-cell md:text-right md:p-6 text-gray-400 text-sm py-2 md:py-6">
+                    <span class="md:hidden text-xs font-bold text-gray-400 uppercase">Date</span>
+                    ${r.created_at}
+                </td>
+                <td class="flex justify-end gap-3 md:table-cell md:text-right md:p-6 pt-4 md:pt-6">
+                    <button onclick="handle(${r.id}, 'approved')" class="flex-1 md:flex-none bg-green-100 text-green-700 px-4 py-3 md:py-2 rounded-xl md:rounded-lg font-bold hover:bg-green-200">Approve</button>
+                    <button onclick="handle(${r.id}, 'rejected')" class="flex-1 md:flex-none bg-red-100 text-red-700 px-4 py-3 md:py-2 rounded-xl md:rounded-lg font-bold hover:bg-red-200">Reject</button>
                 </td>
             `;
             tbody.appendChild(tr);

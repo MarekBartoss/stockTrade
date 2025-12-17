@@ -1,20 +1,11 @@
 <?php
-// header.php - Included in all UI pages
 if (session_status() === PHP_SESSION_NONE) session_start();
-
-// Redirect to Auth if not logged in
 if (!isset($_SESSION['user_id']) && basename($_SERVER['PHP_SELF']) !== 'auth.php') {
     header("Location: auth.php");
     exit;
 }
-
-// LOGIC: Show loader only if the session variable 'has_seen_loader' is NOT set
 $is_first_load = !isset($_SESSION['has_seen_loader']);
-
-// Once we decide to show it (or not), we set the flag so it doesn't show again this session
-if ($is_first_load) {
-    $_SESSION['has_seen_loader'] = true;
-}
+if ($is_first_load) { $_SESSION['has_seen_loader'] = true; }
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -46,10 +37,10 @@ if ($is_first_load) {
         </div>
     <?php endif; ?>
 
-    <!-- CUSTOM CONFIRM MODAL -->
+    <!-- CONFIRM MODAL -->
     <div id="confirmModal" class="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 backdrop-blur-sm hidden opacity-0 modal-backdrop transition-opacity duration-200">
         <div class="bg-white rounded-3xl p-8 max-w-sm w-full shadow-2xl transform scale-95 modal-content transition-all duration-200 m-4" id="confirmBox">
-            <h3 class="text-2xl font-bold mb-2" id="confirmTitle">Confirm Trade</h3>
+            <h3 class="text-2xl font-bold mb-2" id="confirmTitle">Confirm</h3>
             <p class="text-gray-500 mb-8" id="confirmText">Are you sure?</p>
             <div class="flex gap-4">
                 <button onclick="window.closeConfirm(false)" class="flex-1 py-3 rounded-xl border border-gray-200 font-bold hover:bg-gray-50 transition">Cancel</button>
@@ -58,14 +49,14 @@ if ($is_first_load) {
         </div>
     </div>
 
-    <!-- CUSTOM SUCCESS/ERROR MODAL -->
+    <!-- ALERT/SUCCESS MODAL (Supports HTML) -->
     <div id="alertModal" class="fixed inset-0 z-[70] flex items-center justify-center bg-black/50 backdrop-blur-sm hidden opacity-0 modal-backdrop transition-opacity duration-200">
         <div class="bg-white rounded-3xl p-8 max-w-sm w-full shadow-2xl transform scale-95 modal-content transition-all duration-200 m-4 text-center" id="alertBox">
             <div class="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-4" id="alertIcon">
                 <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
             </div>
             <h3 class="text-2xl font-bold mb-2" id="alertTitle">Success</h3>
-            <p class="text-gray-500 mb-6" id="alertText">Operation completed.</p>
+            <div class="text-gray-500 mb-6" id="alertText">Operation completed.</div>
             <button onclick="window.closeAlert()" class="w-full py-3 rounded-xl bg-black text-white font-bold hover:bg-gray-800 transition shadow-lg">Okay</button>
         </div>
     </div>
@@ -85,25 +76,58 @@ if ($is_first_load) {
                 window.marketData = priceData;
                 
                 updateUserUI();
+                
+                // CHECK FOR RATE LIMIT NOTIFICATION
+                // Logic: If 'AAPL' (first stock) is simulated/mock due to limits
+                const sample = window.marketData['AAPL'];
+                if (sample && sample.rate_limit) {
+                   // Check if user suppressed this warning
+                   if (!sessionStorage.getItem('suppressApiWarning')) {
+                       setTimeout(() => {
+                           const msg = `
+                               <p>The API call limit (5/min) was reached.</p>
+                               <p class="text-xs mt-1 text-gray-400">Showing simulated data.</p>
+                               <div class="mt-4 flex items-center justify-center gap-2 text-sm text-black font-bold">
+                                   <input type="checkbox" id="dontShowAgain" class="w-4 h-4 rounded border-gray-300 text-black focus:ring-black">
+                                   <label for="dontShowAgain">Don't show next time</label>
+                               </div>
+                           `;
+                           window.showAlert("API Limit Reached", msg, true);
+                           // Hook into the checkbox after rendering
+                           setTimeout(() => {
+                               document.getElementById('dontShowAgain')?.addEventListener('change', (e) => {
+                                   if(e.target.checked) sessionStorage.setItem('suppressApiWarning', 'true');
+                                   else sessionStorage.removeItem('suppressApiWarning');
+                               });
+                           }, 100);
+                       }, 500);
+                   }
+                }
+
                 if(window.renderPage) window.renderPage();
 
-                const loader = document.getElementById('globalLoader');
-                if(loader) {
-                    loader.style.opacity = '0';
-                    setTimeout(() => loader.remove(), 300);
-                }
+                removeLoader();
                 setInterval(refreshPrices, 15000);
+
             } catch(e) {
                 console.error("Init failed", e);
-                document.getElementById('globalLoader')?.remove();
+                removeLoader();
             }
         }
+
+        function removeLoader() {
+            const loader = document.getElementById('globalLoader');
+            if(loader) {
+                loader.style.opacity = '0';
+                setTimeout(() => loader.remove(), 300);
+            }
+        }
+        setTimeout(removeLoader, 2000);
 
         async function refreshPrices() {
             try {
                 const res = await fetch('api.php?action=get_prices');
                 window.marketData = await res.json();
-                
                 if(window.renderPage) window.renderPage();
             } catch(e) { console.error(e); }
         }
@@ -116,24 +140,12 @@ if ($is_first_load) {
             if(elMobile) elMobile.innerText = cashVal;
         }
 
-        // Updated getLogo function with real domains map for JS-rendered pages
         function getLogo(sym) {
-            const domains = {
-                'AAPL': 'apple.com', 'MSFT': 'microsoft.com', 'GOOGL': 'google.com', 'AMZN': 'amazon.com',
-                'TSLA': 'tesla.com', 'NVDA': 'nvidia.com', 'META': 'meta.com', 'NFLX': 'netflix.com',
-                'AMD': 'amd.com', 'INTC': 'intel.com', 'SPY': 'ssga.com', 'QQQ': 'invesco.com',
-                'BTC-USD': 'bitcoin.org', 'ETH-USD': 'ethereum.org', 'COIN': 'coinbase.com',
-                'JPM': 'jpmorganchase.com', 'DIS': 'disney.com', 'WMT': 'walmart.com', 
-                'SBUX': 'starbucks.com', 'NKE': 'nike.com'
-            };
-            
-            if (domains[sym]) {
-                return `https://logo.clearbit.com/${domains[sym]}`;
-            }
+            const domains = { 'AAPL': 'apple.com', 'MSFT': 'microsoft.com', 'GOOGL': 'google.com', 'AMZN': 'amazon.com', 'TSLA': 'tesla.com', 'NVDA': 'nvidia.com', 'META': 'meta.com', 'NFLX': 'netflix.com', 'AMD': 'amd.com', 'INTC': 'intel.com', 'SPY': 'ssga.com', 'QQQ': 'invesco.com', 'BTC-USD': 'bitcoin.org', 'ETH-USD': 'ethereum.org', 'COIN': 'coinbase.com', 'JPM': 'jpmorganchase.com', 'DIS': 'disney.com', 'WMT': 'walmart.com', 'SBUX': 'starbucks.com', 'NKE': 'nike.com' };
+            if (domains[sym]) return `https://logo.clearbit.com/${domains[sym]}`;
             return `https://ui-avatars.com/api/?name=${sym}&background=000&color=fff&size=64`;
         }
 
-        // --- MODAL LOGIC ---
         window.confirmCallback = null;
         window.showConfirm = function(title, text) {
             return new Promise((resolve) => {
@@ -142,15 +154,9 @@ if ($is_first_load) {
                 document.getElementById('confirmTitle').innerText = title;
                 document.getElementById('confirmText').innerText = text;
                 modal.classList.remove('hidden');
-                setTimeout(() => {
-                    modal.classList.remove('opacity-0');
-                    box.classList.remove('scale-95');
-                    box.classList.add('scale-100');
-                }, 10);
+                setTimeout(() => { modal.classList.remove('opacity-0'); box.classList.remove('scale-95'); box.classList.add('scale-100'); }, 10);
                 window.confirmCallback = (result) => {
-                    box.classList.remove('scale-100');
-                    box.classList.add('scale-95');
-                    modal.classList.add('opacity-0');
+                    box.classList.remove('scale-100'); box.classList.add('scale-95'); modal.classList.add('opacity-0');
                     setTimeout(() => { modal.classList.add('hidden'); resolve(result); }, 200);
                 };
             });
@@ -167,7 +173,8 @@ if ($is_first_load) {
                 const icon = document.getElementById('alertIcon');
                 
                 document.getElementById('alertTitle').innerText = title;
-                document.getElementById('alertText').innerText = text;
+                // Use innerHTML instead of innerText to support HTML message (like checkboxes)
+                document.getElementById('alertText').innerHTML = text;
 
                 if(isError) {
                     icon.className = "w-16 h-16 bg-red-100 text-red-600 rounded-full flex items-center justify-center mx-auto mb-4";
@@ -178,16 +185,10 @@ if ($is_first_load) {
                 }
                 
                 modal.classList.remove('hidden');
-                setTimeout(() => {
-                    modal.classList.remove('opacity-0');
-                    box.classList.remove('scale-95');
-                    box.classList.add('scale-100');
-                }, 10);
+                setTimeout(() => { modal.classList.remove('opacity-0'); box.classList.remove('scale-95'); box.classList.add('scale-100'); }, 10);
                 
                 window.closeAlertCallback = () => {
-                    box.classList.remove('scale-100');
-                    box.classList.add('scale-95');
-                    modal.classList.add('opacity-0');
+                    box.classList.remove('scale-100'); box.classList.add('scale-95'); modal.classList.add('opacity-0');
                     setTimeout(() => { modal.classList.add('hidden'); resolve(); }, 200);
                 };
             });
